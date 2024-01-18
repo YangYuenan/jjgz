@@ -37,6 +37,7 @@ pip3 install -r requirements.txt
 - jjgz.py  主界面及程序启动代码
 - tableWidget.py  重写的表格控件类
 - tools.py  工具函数文件，包括爬虫、配置文件的改写等
+- dist  可执行程序目录
 
 
-本软件暂未提供打包好的可执行文件，如需要请自行查询打包方法
+本项目目录中的dist文件夹里有打包好的可执行文件（仅限windows）
