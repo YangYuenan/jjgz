@@ -3,29 +3,45 @@
 __author__ = 'yangyuenan'
 __time__ = '2024/1/5 9:45'
 
+import os
 import yaml
 from lxml import etree
 import requests
 from time import sleep
 
 
+headers = {'User-Agent':
+'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'}
+
+
 def spider(code: str):
     info_url = 'https://www.dayfund.cn/fundpre/{code}.html'
     url = 'https://www.dayfund.cn/ajs/ajaxdata.shtml?showtype=getfundvalue&fundcode={code}'
-    headers = {'User-Agent':
-'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'}
     req = requests.get(url=url.format(code=code), headers=headers)
     jj_code = code
     jj_price = req.text.split('|')[7]
     jj_chg = req.text.split('|')[5]
+    jj_time = req.text.split('|')[-2] + ' ' + req.text.split('|')[-1]
     req = requests.get(url=info_url.format(code=code), headers=headers)
     html = etree.HTML(req.text)
     jj_name = html.xpath('.//h1/text()')[0]
-    return {'jj_code': jj_code, 'jj_name': jj_name, 'jj_price': jj_price, 'jj_chg': jj_chg}
+    return {'jj_code': jj_code, 'jj_name': jj_name, 'jj_price': jj_price, 'jj_chg': jj_chg, 'jj_time': jj_time}
+
+
+def get_sz():
+    sz_url = 'https://www.dayfund.cn/ajs/ajaxdata.shtml?showtype=getstockvalue&stockcode=sh000001'
+    req = requests.get(sz_url, headers=headers)
+    sz = req.text.replace('上证指数', '上证指数：').replace('span', 'font').replace('class', 'color')
+    return sz
 
 
 def init():
     jj_info = []
+    if not os.path.exists('code.yml'):
+        jj_code = {'code': jj_info}
+        with open('code.yml', 'w', encoding='utf8')as f:
+            yaml.dump(data=jj_code, stream=f, default_flow_style=False)
+        return jj_info
     with open('code.yml', 'r', encoding='utf8')as f:
         jj_code = yaml.load(stream=f, Loader=yaml.FullLoader)
     if jj_code['code']:

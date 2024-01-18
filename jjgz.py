@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QWidget, QVBoxLayout, QPushButton, QLineEdit, QTableWidgetItem, QApplication
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from tools import spider, flush_conf, init
+from tools import spider, flush_conf, init, get_sz
 from tableWidget import TableWidget
 
 executor = ThreadPoolExecutor(3)
@@ -22,8 +22,9 @@ class gui(QMainWindow):
     def __init__(self, parent=None):
         super(gui, self).__init__(parent)
         self.exit = False
+        self.szData = None
         self.setWindowTitle(u'基金估值')
-        self.setMinimumWidth(550)
+        self.setMinimumWidth(700)
         self.setMinimumHeight(400)
         self.mainLayout = QVBoxLayout()
         self.widgetInit()
@@ -34,27 +35,39 @@ class gui(QMainWindow):
         self.setCentralWidget(widget)
         wordLayout = QHBoxLayout()
         wordLabel = QLabel(u'输入基金代码：')
+        self.szInfo = QLabel()
         self.wordInput = QLineEdit()
         self.jjInfo = TableWidget()
-        self.jjInfo.setColumnCount(4)
-        self.jjInfo.setHorizontalHeaderLabels(['基金代码', '基金名称', '现价', '涨跌幅（%）'])
+        self.jjInfo.setColumnCount(5)
+        self.jjInfo.setColumnWidth(0, 80)
+        self.jjInfo.setColumnWidth(1, 200)
+        self.jjInfo.setColumnWidth(2, 80)
+        self.jjInfo.setColumnWidth(3, 100)
+        self.jjInfo.setColumnWidth(4, 180)
+        self.jjInfo.setHorizontalHeaderLabels(['基金代码', '基金名称', '现价', '涨跌幅（%）', '估值时间'])
         self.jjInfo.delete_signal.connect(self.delete_slot)
         addButton = QPushButton(u'添加')
         wordLayout.addWidget(wordLabel)
         wordLayout.addWidget(self.wordInput)
         self.mainLayout.addLayout(wordLayout)
         self.mainLayout.addWidget(addButton)
+        self.mainLayout.addWidget(self.szInfo)
         self.mainLayout.addWidget(self.jjInfo)
         widget.setLayout(self.mainLayout)
         addButton.clicked.connect(self.add)
 
     def init_data(self):
         jj_infos = init()
+        self.szData = get_sz()
         if jj_infos is not None:
             self.init_signal.emit(jj_infos)
 
+    def deal_sz_result(self):
+        self.szInfo.setText(self.szData)
+
     @pyqtSlot(list)
     def deal_data(self, jj_infos):
+        self.deal_sz_result()
         for jj_info in jj_infos:
             self.jjInfo.setRowCount(self.jjInfo.rowCount() + 1)
             self.view_item(jj_info)
@@ -63,6 +76,7 @@ class gui(QMainWindow):
     @pyqtSlot(list)
     def flush_data(self, jj_infos):
         self.jjInfo.setRowCount(0)
+        self.deal_sz_result()
         if jj_infos:
             for jj_info in jj_infos:
                 self.jjInfo.setRowCount(self.jjInfo.rowCount() + 1)
@@ -88,8 +102,11 @@ class gui(QMainWindow):
         code.setFlags(Qt.ItemIsEnabled)
         name = QTableWidgetItem(jj_info['jj_name'])
         name.setFlags(Qt.ItemIsEnabled)
+        gzTime = QTableWidgetItem(jj_info['jj_time'])
+        gzTime.setFlags(Qt.ItemIsEnabled)
         self.jjInfo.setItem(table_count, 0, code)
         self.jjInfo.setItem(table_count, 1, name)
+        self.jjInfo.setItem(table_count, 4, gzTime)
         if '-' in jj_info['jj_chg']:
             price = QTableWidgetItem(jj_info['jj_price'])
             price.setForeground(QBrush(QColor("green")))
@@ -118,6 +135,7 @@ class gui(QMainWindow):
                 break
             if count == 60:
                 jj_infos = init()
+                self.szData = get_sz()
                 self.flush_signal.emit(jj_infos)
                 count = 0
 
