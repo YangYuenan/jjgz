@@ -17,22 +17,28 @@ headers = {'User-Agent':
 def spider(code: str):
     info_url = 'https://www.dayfund.cn/fundpre/{code}.html'
     url = 'https://www.dayfund.cn/ajs/ajaxdata.shtml?showtype=getfundvalue&fundcode={code}'
-    req = requests.get(url=url.format(code=code), headers=headers)
-    jj_code = code
-    jj_price = req.text.split('|')[7]
-    jj_chg = req.text.split('|')[5]
-    jj_time = req.text.split('|')[-2] + ' ' + req.text.split('|')[-1]
-    req = requests.get(url=info_url.format(code=code), headers=headers)
-    html = etree.HTML(req.text)
-    jj_name = html.xpath('.//h1/text()')[0]
-    return {'jj_code': jj_code, 'jj_name': jj_name, 'jj_price': jj_price, 'jj_chg': jj_chg, 'jj_time': jj_time}
+    try:
+        req = requests.get(url=url.format(code=code), headers=headers)
+        jj_code = code
+        jj_price = req.text.split('|')[7]
+        jj_chg = req.text.split('|')[5]
+        jj_time = req.text.split('|')[-2] + ' ' + req.text.split('|')[-1]
+        req = requests.get(url=info_url.format(code=code), headers=headers)
+        html = etree.HTML(req.text)
+        jj_name = html.xpath('.//h1/text()')[0]
+        return {'jj_code': jj_code, 'jj_name': jj_name, 'jj_price': jj_price, 'jj_chg': jj_chg, 'jj_time': jj_time}
+    except Exception as e:
+        return {}
 
 
 def get_sz():
     sz_url = 'https://www.dayfund.cn/ajs/ajaxdata.shtml?showtype=getstockvalue&stockcode=sh000001'
-    req = requests.get(sz_url, headers=headers)
-    sz = req.text.replace('上证指数', '上证指数：').replace('span', 'font').replace('class', 'color')
-    return sz
+    try:
+        req = requests.get(sz_url, headers=headers)
+        sz = req.text.replace('上证指数', '上证指数：').replace('span', 'font').replace('class', 'color')
+        return sz
+    except Exception as e:
+        return None
 
 
 def init():
@@ -46,8 +52,11 @@ def init():
         jj_code = yaml.load(stream=f, Loader=yaml.FullLoader)
     if jj_code['code']:
         for code in jj_code['code']:
-            jj_info.append(spider(code))
-            # sleep(0.5)
+            result = spider(code)
+            if result is None:
+                return []
+            jj_info.append(result)
+                # sleep(0.5)
     return jj_info
 
 

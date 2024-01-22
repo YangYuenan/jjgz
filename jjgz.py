@@ -59,8 +59,10 @@ class gui(QMainWindow):
     def init_data(self):
         jj_infos = init()
         self.szData = get_sz()
-        if jj_infos is not None:
+        if jj_infos:
             self.init_signal.emit(jj_infos)
+        else:
+            self.init_data()
 
     def deal_sz_result(self):
         self.szInfo.setText(self.szData)
@@ -136,7 +138,8 @@ class gui(QMainWindow):
             if count == 60:
                 jj_infos = init()
                 self.szData = get_sz()
-                self.flush_signal.emit(jj_infos)
+                if jj_infos and self.szData:
+                    self.flush_signal.emit(jj_infos)
                 count = 0
 
     def closeEvent(self, event):
