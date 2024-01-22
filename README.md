@@ -29,7 +29,7 @@ virtualenv venv
 pip3 install -r requirements.txt
 
 ```
-### 系统参数配置
+### 配置文件
 1. 配置文件为code.yml，此文件无需修改，通过界面操作时，程序会自动增加或删除配置
 
 ## 项目文件说明 
