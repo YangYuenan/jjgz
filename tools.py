@@ -32,10 +32,11 @@ def spider(code: str):
 
 
 def get_sz():
-    sz_url = 'https://www.dayfund.cn/ajs/ajaxdata.shtml?showtype=getstockvalue&stockcode=sh000001'
+    sz_url = 'https://www.dayfund.cn/ajs/ajaxdata.shtml?showtype=getstockvalue&stockcode=sh000001,sz399001,sz399006,sh000300,sh000011&t=1004'
     try:
         req = requests.get(sz_url, headers=headers)
-        sz = req.text.replace('上证指数', '上证指数：').replace('span', 'font').replace('class', 'color')
+        sz = (req.text.split('深')[0].replace('上证指数', '上证指数：')
+              .replace('span', 'font').replace('class', 'color'))
         return sz
     except Exception as e:
         return None
